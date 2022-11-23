@@ -63,7 +63,6 @@ Body:
 ```json
 {
     "transactionData": {
-        "clientId": 1,
         "amount": 100,
         "description": "Description of the transfer"
     }
