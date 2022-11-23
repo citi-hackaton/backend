@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              Int           @id @default(autoincrement())
+  name            String
+  email           String        @unique
+  bankAccount     String        @unique
+  address         String
+  webhookEndpoint String        @unique
+  apiKey          String        @unique
+  Transaction     Transaction[]
+}
+
+model Bank {
+  id       Int    @id @default(autoincrement())
+  name     String
+  bankCode String @unique
+  apiKey   String @unique
+}
+
+model Transaction {
+  id             String            @id @default(uuid())
+  createdAt      DateTime          @default(now())
+  clientId       Int
+  amount         Float
+  description    String
+  expirationDate DateTime
+  rejectability  Boolean
+  status         TransactionStatus @default(INITIAL)
+
+  client Client @relation(fields: [clientId], references: [id])
+}
+
+enum TransactionStatus {
+  INITIAL
+  PENDING
+  SUCCESS
+  REJECTED
+}

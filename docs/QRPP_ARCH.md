@@ -2,165 +2,188 @@
 
 ## Database
 
-### Tables
+### **Client**
 
-**client**
+| column name     | type    | unique | additional |
+| --------------- | ------- | ------ | ---------- |
+| id              | int     | ✅     | PK, AI     |
+| name            | varchar | ❌     |            |
+| email           | varchar | ✅     |            |
+| bankAccount     | varchar | ✅     |            |
+| address         | varchar | ❌     |            |
+| webhookEndpoint | varchar | ✅     |            |
+| apiKey          | varchar | ✅     |            |
 
-- id
-- name
-- email
-- api_key
-- bank_account
-- address
-- webhook_endpoint
+### **Bank**
 
-**bank**
+| column name | type    | unique | additional |
+| ----------- | ------- | ------ | ---------- |
+| id          | int     | ✅     | PK, AI     |
+| name        | varchar | ❌     |            |
+| bankCode    | varchar | ✅     |            |
+| apiKey      | varchar | ✅     |            |
 
-- id
-- name
-- bank_code
-- api_key
+### **Transaction**
 
-**transaction**
+| Column name    | Type              | Unique | Additional              |
+| -------------- | ----------------- | ------ | ----------------------- |
+| id             | STRING            | ✅     | PK, UUID                |
+| createdAt      | DATETIME          | ❌     | DEFAULT = Creation date |
+| clientId       | INT               | ❌     |                         |
+| amount         | FLOAT             | ❌     |                         |
+| description    | STRING            | ❌     |                         |
+| expirationDate | DATETIME          | ❌     |                         |
+| rejectability  | BOOLEAN           | ❌     |                         |
+| status         | TransactionType\* | ❌     | DEFAULT = Initial       |
 
-- id
-- client_id
-- amount
-- date
-- description
-- expiring_date
-- status
+\*TransactionType: Initial, Pending, Rejected, Success
 
 ## Endpoints
 
 We follow auth header structure: `Authorization: <type> <value>` defined in [RFC7234](https://www.rfc-editor.org/rfc/rfc7235#section-4.2) standard.
 
-### POST /generateQrCode
+### **POST /initializeBusinessTransaction**
 
-Used to generate a QR code with the given transaction data.
+Used to initialize a transaction and return a transaction id.
 
-CLIENT (shop/payment provider) -> SERVER (QRPP)
+`CLIENT` _(shop/payment provider)_ -> `SERVER` _(QRPP)_
 
 **REQUEST**
 
 Headers:
-- **Authorization**: X-QRPP-Api-Key *{KEY}*
+
+-   **Authorization**: X-QRPP-Api-Key _{KEY}_
 
 Body:
+
 ```json
 {
-  "transactionData": {
-    "amount": 100,
-    "description": "Some description"
-  }
+    "transactionData": {
+        "clientId": 1,
+        "amount": 100,
+        "description": "Description of the transfer"
+    }
 }
 ```
 
 **RESPONSE**
 
 Body:
+
 ```json
 {
-  "transactionId": "TRANSACTION_ID"
+    "transactionId": "TRANSACTION_ID"
 }
 ```
 
 ---
 
-### POST /generatePersonalQrCode
+### **POST /initializePersonalTransaction**
 
-Used to generate a QR code with the given transaction data.
+Used to initialize a transaction between two users and return a transaction id.
 
-BANK APP -> BANK API -> SERVER (QRPP)
+`BANK APP` -> `BANK API` -> `SERVER` _(QRPP)_
 
 **REQUEST**
 
 Headers:
-- **Authorization**: X-QRPP-Api-Key *{KEY}*
+
+-   **Authorization**: X-QRPP-Api-Key _{KEY}_
 
 Body:
+
 ```json
 {
-  "transactionData": {
-    "amount": 100,
-    "bank_account": "123456789",
-    "description": "Some description"
-  }
+    "transactionData": {
+        "bankId": 1,
+        "amount": 100,
+        "bankAccount": "123456789",
+        "description": "Description of the transfer"
+    }
 }
 ```
 
 **RESPONSE**
 
 Body:
+
 ```json
 {
-  "transactionId": "TRANSACTION_ID"
+    "transactionId": "TRANSACTION_ID"
 }
 ```
 
 ---
 
-### POST /getTransactionData
+### **POST /validateTransaction**
 
-Used to get the transaction data by *TRANSACTION_ID*.
+Used to get the transaction data by `TRANSACTION_ID`.
+Side effect: if the transaction is in `Initial` state, it will be set to `Pending`, otherwise will respond with error.
 
-BANK API -> SERVER (QRPP)
+`BANK API` -> `SERVER` *(QRPP)*
 
 **REQUEST**
 
 Headers:
-- **Authorization**: X-QRPP-Api-Key *{KEY}*
+
+-   **Authorization**: X-QRPP-Api-Key _{KEY}_
 
 Body:
+
 ```json
 {
-  "transactionId": "TRANSACTION_ID"
+    "transactionId": "TRANSACTION_ID"
 }
 ```
 
 **RESPONSE**
 
 Body:
+
 ```json
 {
-  "transactionData": {
-    "amount": 100,
-    "description": "Some description",
-    "client_id": "Some client id",
-    "client_name": "Some client name",
-    "bank_account": "Some bank account",
-    "address": "Some address"
-  }
+    "transactionData": {
+        "amount": 100,
+        "description": "Some description",
+        "clientId": "Some client id",
+        "clientName": "Some client name",
+        "bankAccount": "Some bank account",
+        "address": "Some address",
+        "status": "Pending"
+    }
 }
 ```
 
 ---
 
-### POST /updateTransactionStatus
+### **POST /updateTransactionStatus**
 
-Used to confirm/reject the transaction by *TRANSACTION_ID*.
+Used to **confirm**/**reject** the transaction by `TRANSACTION_ID`.
 
-BANK API -> SERVER (QRPP)
+`BANK API` -> `SERVER` *(QRPP)*
 
 **REQUEST**
 
 Headers:
-- **Authorization**: X-QRPP-Api-Key *{KEY}*
+
+-   **Authorization**: X-QRPP-Api-Key _{KEY}_
 
 Body:
+
 ```json
 {
-  "transactionId": "TRANSACTION_ID",
-  "action": "confirm/reject"
+    "transactionId": "TRANSACTION_ID",
+    "action": "confirm/reject"
 }
 ```
 
 **RESPONSE**
 
 Body:
+
 ```json
 {
-  "status": "OK"
+    "status": "OK"
 }
 ```
 
@@ -171,9 +194,10 @@ When transaction is accepted/rejected/timed out, QRPP will send a POST request t
 **REQUEST**
 
 Body:
+
 ```json
 {
-  "transactionId": "TRANSACTION_ID",
-  "action": "accepted/rejected/timed_out"
+    "transactionId": "TRANSACTION_ID",
+    "action": "accepted/rejected/timed_out"
 }
 ```
