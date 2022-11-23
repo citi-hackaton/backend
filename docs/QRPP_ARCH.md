@@ -12,6 +12,7 @@
 - api_key
 - bank_account
 - address
+- webhook_endpoint
 
 **transaction**
 
@@ -89,9 +90,9 @@ Body:
 }
 ```
 
-### POST /confirmTransaction
+### POST /updateTransactionStatus
 
-Used to confirm the transaction by *SESSION_ID*.
+Used to confirm/reject the transaction by *SESSION_ID*.
 
 BANK API -> SERVER (QRPP)
 
@@ -103,7 +104,8 @@ Headers:
 Body:
 ```json
 {
-  "sessionId": "SESSION_ID"
+  "sessionId": "SESSION_ID",
+  "action": "confirm/reject"
 }
 ```
 
