@@ -51,7 +51,7 @@ Body:
 {
   "transactionData": {
     "amount": 100,
-    "description": "Some description",
+    "description": "Some description"
   }
 }
 ```
@@ -61,7 +61,6 @@ Body:
 Body:
 ```json
 {
-  "qrCode": "base64 encoded image containing TRANSACTION_ID"
   "transactionId": "TRANSACTION_ID"
 }
 ```
@@ -85,7 +84,7 @@ Body:
   "transactionData": {
     "amount": 100,
     "bank_account": "123456789",
-    "description": "Some description",
+    "description": "Some description"
   }
 }
 ```
@@ -95,7 +94,6 @@ Body:
 Body:
 ```json
 {
-  "qrCode": "base64 encoded image containing TRANSACTION_ID"
   "transactionId": "TRANSACTION_ID"
 }
 ```
