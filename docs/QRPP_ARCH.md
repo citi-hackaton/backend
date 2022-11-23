@@ -21,6 +21,7 @@
 - date
 - description
 - expiring_date
+- status
 
 ## Endpoints
 
@@ -33,7 +34,7 @@ CLIENT (shop/payment provider) -> SERVER (QRPP)
 **REQUEST**
 
 Headers:
-- some auth
+- **Authorization**: X-QRPP-Api-Key *{KEY}*
 
 Body:
 ```json
@@ -63,7 +64,7 @@ BANK API -> SERVER (QRPP)
 **REQUEST**
 
 Headers:
-- some auth
+- **Authorization**: X-QRPP-Api-Key *{KEY}*
 
 Body:
 ```json
@@ -97,7 +98,7 @@ BANK API -> SERVER (QRPP)
 **REQUEST**
 
 Headers:
-- some auth
+- **Authorization**: X-QRPP-Api-Key *{KEY}*
 
 Body:
 ```json
