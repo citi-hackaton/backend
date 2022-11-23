@@ -66,6 +66,42 @@ Body:
 }
 ```
 
+---
+
+### POST /generatePersonalQrCode
+
+Used to generate a QR code with the given transaction data.
+
+BANK APP -> BANK API -> SERVER (QRPP)
+
+**REQUEST**
+
+Headers:
+- **Authorization**: X-QRPP-Api-Key *{KEY}*
+
+Body:
+```json
+{
+  "transactionData": {
+    "amount": 100,
+    "bank_account": "123456789",
+    "description": "Some description",
+  }
+}
+```
+
+**RESPONSE**
+
+Body:
+```json
+{
+  "qrCode": "base64 encoded image containing TRANSACTION_ID"
+  "transactionId": "TRANSACTION_ID"
+}
+```
+
+---
+
 ### POST /getTransactionData
 
 Used to get the transaction data by *TRANSACTION_ID*.
@@ -99,6 +135,8 @@ Body:
   }
 }
 ```
+
+---
 
 ### POST /updateTransactionStatus
 
