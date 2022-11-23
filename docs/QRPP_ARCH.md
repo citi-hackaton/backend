@@ -26,6 +26,8 @@
 
 ## Endpoints
 
+We follow auth header structure: Authorization: <type> <value> defined in [RFC7234](https://www.rfc-editor.org/rfc/rfc7235#section-4.2) standard.
+
 ### POST /generateQrCode
 
 Used to generate a QR code with the given transaction data.
