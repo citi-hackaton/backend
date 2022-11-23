@@ -14,6 +14,13 @@
 - address
 - webhook_endpoint
 
+**bank**
+
+- id
+- name
+- bank_code
+- api_key
+
 **transaction**
 
 - id
@@ -54,13 +61,14 @@ Body:
 Body:
 ```json
 {
-  "qrCode": "base64 encoded image containing SESSION_ID"
+  "qrCode": "base64 encoded image containing TRANSACTION_ID"
+  "transactionId": "TRANSACTION_ID"
 }
 ```
 
 ### POST /getTransactionData
 
-Used to get the transaction data by *SESSION_ID*.
+Used to get the transaction data by *TRANSACTION_ID*.
 
 BANK API -> SERVER (QRPP)
 
@@ -72,7 +80,7 @@ Headers:
 Body:
 ```json
 {
-  "sessionId": "SESSION_ID"
+  "transactionId": "TRANSACTION_ID"
 }
 ```
 
@@ -94,7 +102,7 @@ Body:
 
 ### POST /updateTransactionStatus
 
-Used to confirm/reject the transaction by *SESSION_ID*.
+Used to confirm/reject the transaction by *TRANSACTION_ID*.
 
 BANK API -> SERVER (QRPP)
 
@@ -106,7 +114,7 @@ Headers:
 Body:
 ```json
 {
-  "sessionId": "SESSION_ID",
+  "transactionId": "TRANSACTION_ID",
   "action": "confirm/reject"
 }
 ```
@@ -117,5 +125,19 @@ Body:
 ```json
 {
   "status": "OK"
+}
+```
+
+## Webhook
+
+When transaction is accepted/rejected/timed out, QRPP will send a POST request to the webhook endpoint of the client.
+
+**REQUEST**
+
+Body:
+```json
+{
+  "transactionId": "TRANSACTION_ID",
+  "action": "accepted/rejected/timed_out"
 }
 ```
