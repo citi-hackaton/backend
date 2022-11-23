@@ -4,39 +4,43 @@
 
 ### **Client**
 
-| column name     | type    | unique | additional |
-| --------------- | ------- | ------ | ---------- |
-| id              | int     | ✅     | PK, AI     |
-| name            | varchar | ❌     |            |
-| email           | varchar | ✅     |            |
-| bankAccount     | varchar | ✅     |            |
-| address         | varchar | ❌     |            |
-| webhookEndpoint | varchar | ✅     |            |
-| apiKey          | varchar | ✅     |            |
+| column name     | type   | unique | additional |
+| --------------- | ------ | ------ | ---------- |
+| id              | INT    | ✅     | *PK, *AI   |
+| name            | STRING | ❌     |            |
+| email           | STRING | ✅     |            |
+| bankAccount     | STRING | ❌     |            |
+| address         | STRING | ❌     |            |
+| webhookEndpoint | STRING | ✅     |            |
+| apiKey          | STRING | ✅     |            |
 
 ### **Bank**
 
-| column name | type    | unique | additional |
-| ----------- | ------- | ------ | ---------- |
-| id          | int     | ✅     | PK, AI     |
-| name        | varchar | ❌     |            |
-| bankCode    | varchar | ✅     |            |
-| apiKey      | varchar | ✅     |            |
+| column name | type   | unique | additional |
+| ----------- | ------ | ------ | ---------- |
+| id          | INT    | ✅     | PK, AI     |
+| name        | STRING | ✅     |            |
+| bankCode    | STRING | ✅     |            |
+| apiKey      | STRING | ✅     |            |
 
 ### **Transaction**
 
-| Column name    | Type              | Unique | Additional              |
-| -------------- | ----------------- | ------ | ----------------------- |
-| id             | STRING            | ✅     | PK, UUID                |
-| createdAt      | DATETIME          | ❌     | DEFAULT = Creation date |
-| clientId       | INT               | ❌     |                         |
-| amount         | FLOAT             | ❌     |                         |
-| description    | STRING            | ❌     |                         |
-| expirationDate | DATETIME          | ❌     |                         |
-| rejectability  | BOOLEAN           | ❌     |                         |
-| status         | TransactionType\* | ❌     | DEFAULT = Initial       |
+| Column name    | Type              | Unique | Additional                |
+| -------------- | ----------------- | ------ | ------------------------- |
+| id             | STRING            | ✅     | PK, \*UUID                |
+| createdAt      | DATETIME          | ❌     | \*DEFAULT = Creation date |
+| clientId       | INT               | ❌     | FK(Client)                |
+| amount         | FLOAT             | ❌     |                           |
+| description    | STRING            | ❌     |                           |
+| expirationDate | DATETIME          | ❌     |                           |
+| rejectability  | BOOLEAN           | ❌     |                           |
+| status         | TransactionType\* | ❌     | DEFAULT = Initial         |
 
-\*TransactionType: Initial, Pending, Rejected, Success
+-   \***TransactionType**: Initial, Pending, Rejected, Success
+-   \***PK**: Primary Key
+-   \***AI**: Auto Increment
+-   \***UUID**: Universally Unique Identifier
+-   \***DEFAULT**: Default value
 
 ## Endpoints
 
@@ -120,7 +124,7 @@ Body:
 Used to get the transaction data by `TRANSACTION_ID`.
 Side effect: if the transaction is in `Initial` state, it will be set to `Pending`, otherwise will respond with error.
 
-`BANK API` -> `SERVER` *(QRPP)*
+`BANK API` -> `SERVER` _(QRPP)_
 
 **REQUEST**
 
@@ -160,7 +164,7 @@ Body:
 
 Used to **confirm**/**reject** the transaction by `TRANSACTION_ID`.
 
-`BANK API` -> `SERVER` *(QRPP)*
+`BANK API` -> `SERVER` _(QRPP)_
 
 **REQUEST**
 
