@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class QrPaymentsService {
     constructor(private prisma: PrismaService) {}
 
-    async initializeBusinessTransaction(data: any) {
+    async initializeBusinessTransaction(data: Prisma.TransactionCreateInput) {
         // Create a transaction using the data
 
-        const { clientId, amount, transactionDescription } = data;
+        const clientId = 123456;
 
         // Get client data from db using client id
         // USE PRISMA HERE
@@ -17,11 +18,13 @@ export class QrPaymentsService {
         const twoMinutes = 2 * 60 * 1000;
         const transaction = await this.prisma.transaction.create({
             data: {
-                amount,
-                description: transactionDescription,
+                amount: data.amount,
+                description: data.description,
+                isRejectable: data.isRejectable,
                 clientId,
+                // clientId: 2,
+                // clientId,
                 expirationDate: new Date(new Date().getTime() + twoMinutes),
-                rejectability: true,
             },
         });
         const transactionId = transaction.id;

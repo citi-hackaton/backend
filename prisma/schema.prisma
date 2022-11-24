@@ -14,15 +14,15 @@ model Client {
   bankAccount     String        @unique
   address         String
   webhookEndpoint String        @unique
-  apiKey          String        @unique
-  Transaction     Transaction[]
+  apiKeyHash      String?       @unique
+  transactions    Transaction[]
 }
 
 model Bank {
-  id       Int    @id @default(autoincrement())
-  name     String
-  bankCode String @unique
-  apiKey   String @unique
+  id         Int     @id @default(autoincrement())
+  name       String
+  bankCode   String  @unique
+  apiKeyHash String? @unique
 }
 
 model Transaction {
@@ -32,7 +32,7 @@ model Transaction {
   amount         Float
   description    String
   expirationDate DateTime
-  rejectability  Boolean
+  isRejectable   Boolean           @map("rejectable")
   status         TransactionStatus @default(INITIAL)
 
   client Client @relation(fields: [clientId], references: [id])

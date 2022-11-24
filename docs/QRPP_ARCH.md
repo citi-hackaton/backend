@@ -98,7 +98,6 @@ Body:
 ```json
 {
     "transactionData": {
-        "bankId": 1,
         "amount": 100,
         "bankAccount": "123456789",
         "description": "Description of the transfer"

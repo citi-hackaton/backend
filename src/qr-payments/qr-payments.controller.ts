@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ClientApiKeyGuard } from 'src/auth/ClientApiKeyGuard';
 
 @Controller('qrPayments')
 export class QrPaymentsController {
@@ -18,6 +19,7 @@ export class QrPaymentsController {
     }
 
     @Get()
+    @UseGuards(ClientApiKeyGuard)
     getHello(): string {
         return 'Hello World!';
     }
