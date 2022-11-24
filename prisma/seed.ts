@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, Client } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -23,6 +23,10 @@ const fakeBank = async (): Promise<Prisma.BankCreateInput> => ({
 
 async function main() {
     console.log('Seeding...');
+
+    const transactions = await prisma.transaction.findMany();
+
+    console.log(transactions);
 
     await prisma.client.create({
         data: await fakeClient(),

@@ -43,4 +43,5 @@ enum TransactionStatus {
   PENDING
   SUCCESS
   REJECTED
+  TIMED_OUT
 }

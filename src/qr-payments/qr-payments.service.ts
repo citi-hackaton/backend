@@ -1,92 +1,158 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
+import { Prisma, TransactionStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import { SchedulerRegistry } from '@nestjs/schedule';
+import * as dayjs from 'dayjs';
+import axios from 'axios';
+interface TransactionReturnType {
+    id: string;
+    amount: number;
+    description: string;
+    client: {
+        name: string;
+        webhookEndpoint: string;
+    };
+}
 @Injectable()
 export class QrPaymentsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private schedulerRegistry: SchedulerRegistry,
+    ) {}
 
-    async initializeBusinessTransaction(data: Prisma.TransactionCreateInput) {
-        // Create a transaction using the data
-
-        const clientId = 123456;
-
-        // Get client data from db using client id
-        // USE PRISMA HERE
-
-        // Generate transaction ID TODO
-        const twoMinutes = 2 * 60 * 1000;
+    async initializeBusinessTransaction(
+        transactionData: Prisma.TransactionCreateInput,
+        clientId: number,
+    ) {
+        const currentTime = dayjs();
+        const twoMinutesFromNow = currentTime
+            .add(2, 'minutes')
+            .add(10, 'seconds')
+            .toDate();
         const transaction = await this.prisma.transaction.create({
             data: {
-                amount: data.amount,
-                description: data.description,
-                isRejectable: data.isRejectable,
+                amount: transactionData.amount,
+                description: transactionData.description,
+                isRejectable: transactionData.isRejectable,
                 clientId,
-                // clientId: 2,
-                // clientId,
-                expirationDate: new Date(new Date().getTime() + twoMinutes),
+                expirationDate: twoMinutesFromNow,
+            },
+            select: {
+                id: true,
             },
         });
-        const transactionId = transaction.id;
 
-        // Insert transaction into db
-        // USE PRISMA HERE
-        // transactionId
-        // client id
-        // amount
-        // date
-        // expiration date
-        // transaction description
-        // rejectability
-        // status (initial)
-
-        // Return the generated transaction id
-        return transactionId;
-    }
-
-    validateTransaction(data: any) {
-        // Validate transaction data
-
-        const { transactionId } = data;
-
-        // Get transaction data from db using transaction id
-        const transactionData = {
-            transactionId,
-            // so on
+        const timeOutCallback = async () => {
+            await this.prisma.transaction.update({
+                where: {
+                    id: transaction.id,
+                },
+                data: {
+                    status: 'TIMED_OUT',
+                },
+            });
         };
-        // USE PRISMA HERE
 
-        // If transaction is valid, set transaction status to 'pending'
-        // USE PRISMA HERE
+        const timeOut = setTimeout(
+            timeOutCallback,
+            twoMinutesFromNow.getTime() - Date.now(),
+        );
+        this.schedulerRegistry.addTimeout(transaction.id, timeOut);
 
-        // Return transaction data
-        return transactionData;
+        return {
+            transactionId: transaction.id,
+        };
     }
 
-    updateTransaction(data: any) {
-        // Set transaction status based on action
-
-        const { transactionId, action } = data;
-
-        // Get webhook data from db using transaction id
-        const webhookEndpoint = 'https://webhook.site/1234567890';
-        // USE PRISMA HERE
-
-        // Set transaction status based on action
-        switch (action) {
-            case 'confirm':
-                // Set transaction status to 'accepted'
-                // USE PRISMA HERE
-                break;
-            case 'reject':
-                // Set transaction status to 'rejected'
-                // USE PRISMA HERE
-                break;
-            default:
-                break;
+    async validateTransaction(transactionId: string) {
+        let updatedTransaction: any;
+        try {
+            updatedTransaction = await this.prisma.transaction.update({
+                where: {
+                    id: transactionId,
+                },
+                data: {
+                    status: 'PENDING',
+                },
+                select: {
+                    id: true,
+                    amount: true,
+                    description: true,
+                    client: {
+                        select: {
+                            name: true,
+                            webhookEndpoint: true,
+                        },
+                    },
+                },
+            });
+        } catch (error) {
+            throw new NotFoundException();
         }
 
-        // Send webhook to webhook endpoint
-        // USE AXIOS HERE
+        this.schedulerRegistry.deleteTimeout(transactionId);
+        console.log('siema2');
+
+        await axios
+            .post(updatedTransaction.client.webhookEndpoint, {
+                id: updatedTransaction.id,
+                status: TransactionStatus.PENDING,
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+
+        return updatedTransaction;
+    }
+
+    async updateTransaction(transactionData: {
+        transactionId: string;
+        status: TransactionStatus;
+    }) {
+        const { transactionId, status } = transactionData;
+
+        console.log({ transactionId, status });
+
+        const transaction = await this.prisma.transaction.findUnique({
+            where: {
+                id: transactionId,
+            },
+            select: {
+                id: true,
+                status: true,
+            },
+        });
+
+        if (transaction?.status !== 'PENDING') {
+            throw new BadRequestException("Transaction isn't pending");
+        }
+
+        const updateTransaction = await this.prisma.transaction.update({
+            where: {
+                id: transactionId,
+            },
+            data: {
+                status,
+            },
+            select: {
+                id: true,
+                status: true,
+                client: {
+                    select: {
+                        webhookEndpoint: true,
+                    },
+                },
+            },
+        });
+
+        await axios
+            .post(updateTransaction.client.webhookEndpoint, updateTransaction)
+            .catch(() => {
+                console.log('Error while sending webhook');
+            });
     }
 }

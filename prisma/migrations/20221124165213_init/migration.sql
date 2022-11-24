@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "TransactionStatus" AS ENUM ('INITIAL', 'PENDING', 'SUCCESS', 'REJECTED');
+CREATE TYPE "TransactionStatus" AS ENUM ('INITIAL', 'PENDING', 'SUCCESS', 'REJECTED', 'TIMED_OUT');
 
 -- CreateTable
 CREATE TABLE "Client" (

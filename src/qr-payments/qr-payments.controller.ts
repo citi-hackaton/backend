@@ -1,26 +1,69 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ClientApiKeyGuard } from 'src/auth/ClientApiKeyGuard';
+import {
+    Body,
+    Controller,
+    HttpCode,
+    Post,
+    Req,
+    UseGuards,
+} from '@nestjs/common';
+import { Prisma, TransactionStatus } from '@prisma/client';
+import { BankApiKeyGuard } from 'src/guards/BankApiKeyGuard';
+import { ClientApiKeyGuard } from 'src/guards/ClientApiKeyGuard';
+import { QrPaymentsService } from './qr-payments.service';
 
 @Controller('qrPayments')
 export class QrPaymentsController {
-    @Post('initializeTransaction')
-    initializeTransaction(@Body() body: any) {
-        // Generate QR co
+    constructor(private qrPaymentsService: QrPaymentsService) {}
+
+    @Post('initializeBusinessTransaction')
+    @UseGuards(ClientApiKeyGuard)
+    @HttpCode(200)
+    initializeBusinessTransaction(
+        @Body() transactionData: Prisma.TransactionCreateInput,
+        @Req()
+        request: Request & {
+            client: {
+                id: number;
+                apiKeyHash: string | null;
+            };
+        },
+    ) {
+        const { client } = request;
+        return this.qrPaymentsService.initializeBusinessTransaction(
+            transactionData,
+            client.id,
+        );
+    }
+
+    @Post('initializeBusinessTransaction')
+    @UseGuards(BankApiKeyGuard)
+    @HttpCode(200)
+    initializePersonalTransaction(
+        @Body() transactionData: Prisma.TransactionCreateInput,
+    ) {
+        // return this.qrPaymentsService.initializeBusinessTransaction(
+        //     transactionData,
+        // );
     }
 
     @Post('validateTransaction')
-    validateTransaction(@Body() body: any) {
-        // Generate QR code
+    @UseGuards(BankApiKeyGuard)
+    @HttpCode(200)
+    validateTransaction(@Body() body: { transactionId: string }) {
+        console.log(body);
+        return this.qrPaymentsService.validateTransaction(body.transactionId);
     }
 
     @Post('updateTransaction')
-    updateTransaction(@Body() body: any) {
-        // Generate QR code
-    }
-
-    @Get()
-    @UseGuards(ClientApiKeyGuard)
-    getHello(): string {
-        return 'Hello World!';
+    @UseGuards(BankApiKeyGuard)
+    @HttpCode(200)
+    updateTransaction(
+        @Body()
+        transactionData: {
+            transactionId: string;
+            status: TransactionStatus;
+        },
+    ) {
+        return this.qrPaymentsService.updateTransaction(transactionData);
     }
 }
