@@ -84,10 +84,14 @@ export class QrPaymentsService {
                     description: true,
                     client: {
                         select: {
+                            id: true,
                             name: true,
+                            bankAccount: true,
+                            address: true,
                             webhookEndpoint: true,
                         },
                     },
+                    status: true,
                 },
             });
         } catch (error) {
@@ -95,7 +99,6 @@ export class QrPaymentsService {
         }
 
         this.schedulerRegistry.deleteTimeout(transactionId);
-        console.log('siema2');
 
         await axios
             .post(updatedTransaction.client.webhookEndpoint, {
@@ -106,7 +109,15 @@ export class QrPaymentsService {
                 console.log(error);
             });
 
-        return updatedTransaction;
+        return {
+            amount: updatedTransaction.amount,
+            description: updatedTransaction.description,
+            clientId: updatedTransaction.client.id,
+            clientName: updatedTransaction.client.name,
+            bankAccount: updatedTransaction.client.bankAccount,
+            address: updatedTransaction.client.address,
+            status: updatedTransaction.status,
+        };
     }
 
     async updateTransaction(transactionData: {
@@ -154,5 +165,9 @@ export class QrPaymentsService {
             .catch(() => {
                 console.log('Error while sending webhook');
             });
+
+        return {
+            status: 'OK',
+        };
     }
 }

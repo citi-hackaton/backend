@@ -41,7 +41,7 @@ model Transaction {
 enum TransactionStatus {
   INITIAL
   PENDING
-  SUCCESS
+  ACCEPTED
   REJECTED
   TIMED_OUT
 }

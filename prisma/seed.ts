@@ -24,10 +24,6 @@ const fakeBank = async (): Promise<Prisma.BankCreateInput> => ({
 async function main() {
     console.log('Seeding...');
 
-    const transactions = await prisma.transaction.findMany();
-
-    console.log(transactions);
-
     await prisma.client.create({
         data: await fakeClient(),
     });

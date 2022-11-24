@@ -19,7 +19,8 @@ export class QrPaymentsController {
     @UseGuards(ClientApiKeyGuard)
     @HttpCode(200)
     initializeBusinessTransaction(
-        @Body() transactionData: Prisma.TransactionCreateInput,
+        @Body()
+        { transactionData }: { transactionData: Prisma.TransactionCreateInput },
         @Req()
         request: Request & {
             client: {
@@ -35,23 +36,22 @@ export class QrPaymentsController {
         );
     }
 
-    @Post('initializeBusinessTransaction')
-    @UseGuards(BankApiKeyGuard)
-    @HttpCode(200)
-    initializePersonalTransaction(
-        @Body() transactionData: Prisma.TransactionCreateInput,
-    ) {
-        // return this.qrPaymentsService.initializeBusinessTransaction(
-        //     transactionData,
-        // );
-    }
+    // @Post('initializeBusinessTransaction')
+    // @UseGuards(BankApiKeyGuard)
+    // @HttpCode(200)
+    // initializePersonalTransaction(
+    //     @Body() transactionData: Prisma.TransactionCreateInput,
+    // ) {
+    // return this.qrPaymentsService.initializeBusinessTransaction(
+    //     transactionData,
+    // );
+    // }
 
     @Post('validateTransaction')
     @UseGuards(BankApiKeyGuard)
     @HttpCode(200)
-    validateTransaction(@Body() body: { transactionId: string }) {
-        console.log(body);
-        return this.qrPaymentsService.validateTransaction(body.transactionId);
+    validateTransaction(@Body() { transactionId }: { transactionId: string }) {
+        return this.qrPaymentsService.validateTransaction(transactionId);
     }
 
     @Post('updateTransaction')

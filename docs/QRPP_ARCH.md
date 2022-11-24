@@ -34,9 +34,9 @@
 | description    | STRING            | ❌     |                           |
 | expirationDate | DATETIME          | ❌     |                           |
 | rejectability  | BOOLEAN           | ❌     |                           |
-| status         | TransactionType\* | ❌     | DEFAULT = Initial         |
+| status         | TransactionType\* | ❌     | DEFAULT = INITIAL         |
 
--   \***TransactionType**: Initial, Pending, Rejected, Success
+-   \***TransactionType**: INITIAL, PENDING, ACCEPTED, REJECTED, TIMED_OUT
 -   \***PK**: Primary Key
 -   \***AI**: Auto Increment
 -   \***UUID**: Universally Unique Identifier
@@ -46,7 +46,7 @@
 
 We follow auth header structure: `Authorization: <type> <value>` defined in [RFC7234](https://www.rfc-editor.org/rfc/rfc7235#section-4.2) standard.
 
-### **POST /initializeBusinessTransaction**
+### **POST /qrPayments/initializeBusinessTransaction**
 
 Used to initialize a transaction and return a transaction id.
 
@@ -64,7 +64,8 @@ Body:
 {
     "transactionData": {
         "amount": 100,
-        "description": "Description of the transfer"
+        "description": "Description of the transfer",
+        "isRejectable": true
     }
 }
 ```
@@ -81,7 +82,7 @@ Body:
 
 ---
 
-### **POST /initializePersonalTransaction**
+### **POST /qrPayments/initializePersonalTransaction**
 
 Used to initialize a transaction between two users and return a transaction id.
 
@@ -117,7 +118,7 @@ Body:
 
 ---
 
-### **POST /validateTransaction**
+### **POST /qrPayments/validateTransaction**
 
 Used to get the transaction data by `TRANSACTION_ID`.
 Side effect: if the transaction is in `Initial` state, it will be set to `Pending`, otherwise will respond with error.
@@ -151,14 +152,14 @@ Body:
         "clientName": "Some client name",
         "bankAccount": "Some bank account",
         "address": "Some address",
-        "status": "Pending"
+        "status": "PENDING"
     }
 }
 ```
 
 ---
 
-### **POST /updateTransactionStatus**
+### **POST /qrPayments/updateTransactionStatus**
 
 Used to **confirm**/**reject** the transaction by `TRANSACTION_ID`.
 
@@ -175,7 +176,7 @@ Body:
 ```json
 {
     "transactionId": "TRANSACTION_ID",
-    "action": "confirm/reject"
+    "status": "ACCEPTED | REJECTED"
 }
 ```
 
@@ -185,7 +186,8 @@ Body:
 
 ```json
 {
-    "status": "OK"
+    "transactionId": "TRANSACTION_ID",
+    "status": "ACCEPTED | REJECTED"
 }
 ```
 
@@ -200,6 +202,6 @@ Body:
 ```json
 {
     "transactionId": "TRANSACTION_ID",
-    "action": "accepted/rejected/timed_out"
+    "status": "ACCEPTED | REJECTED | TIMED_OUT"
 }
 ```
