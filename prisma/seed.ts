@@ -11,7 +11,8 @@ const fakeClient = async (): Promise<Prisma.ClientCreateInput> => ({
     email: 'fake-client@example.com',
     bankAccount: '123456789',
     address: 'Fake Address',
-    webhookEndpoint: 'https://example.com/webhook',
+    webhookEndpoint:
+        'https://client-nine-pi.vercel.app/api/transactions/status',
     apiKeyHash: await argon2.hash(clientApiKey),
 });
 
@@ -23,6 +24,8 @@ const fakeBank = async (): Promise<Prisma.BankCreateInput> => ({
 
 async function main() {
     console.log('Seeding...');
+
+    await prisma.transaction.deleteMany({});
 
     await prisma.client.create({
         data: await fakeClient(),

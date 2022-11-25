@@ -186,8 +186,7 @@ Body:
 
 ```json
 {
-    "transactionId": "TRANSACTION_ID",
-    "status": "ACCEPTED | REJECTED"
+    "status": "ok"
 }
 ```
 

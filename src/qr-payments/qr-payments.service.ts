@@ -8,15 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import * as dayjs from 'dayjs';
 import axios from 'axios';
-interface TransactionReturnType {
-    id: string;
-    amount: number;
-    description: string;
-    client: {
-        name: string;
-        webhookEndpoint: string;
-    };
-}
+
 @Injectable()
 export class QrPaymentsService {
     constructor(
@@ -25,7 +17,12 @@ export class QrPaymentsService {
     ) {}
 
     async initializeBusinessTransaction(
-        transactionData: Prisma.TransactionCreateInput,
+        {
+            amount,
+            description,
+            isRejectable,
+            expirationDate,
+        }: Prisma.TransactionCreateInput,
         clientId: number,
     ) {
         const currentTime = dayjs();
@@ -35,11 +32,13 @@ export class QrPaymentsService {
             .toDate();
         const transaction = await this.prisma.transaction.create({
             data: {
-                amount: transactionData.amount,
-                description: transactionData.description,
-                isRejectable: transactionData.isRejectable,
+                amount,
+                description,
+                isRejectable,
                 clientId,
-                expirationDate: twoMinutesFromNow,
+                expirationDate: isRejectable
+                    ? twoMinutesFromNow
+                    : expirationDate,
             },
             select: {
                 id: true,
@@ -69,36 +68,49 @@ export class QrPaymentsService {
     }
 
     async validateTransaction(transactionId: string) {
-        let updatedTransaction: any;
-        try {
-            updatedTransaction = await this.prisma.transaction.update({
-                where: {
-                    id: transactionId,
-                },
-                data: {
-                    status: 'PENDING',
-                },
-                select: {
-                    id: true,
-                    amount: true,
-                    description: true,
-                    client: {
-                        select: {
-                            id: true,
-                            name: true,
-                            bankAccount: true,
-                            address: true,
-                            webhookEndpoint: true,
-                        },
-                    },
-                    status: true,
-                },
-            });
-        } catch (error) {
-            throw new NotFoundException();
+        const transaction = await this.prisma.transaction.findUnique({
+            where: {
+                id: transactionId,
+            },
+            select: {
+                status: true,
+            },
+        });
+        if (!transaction) {
+            throw new NotFoundException('Transaction not found');
+        }
+        if (transaction?.status !== 'INITIAL') {
+            throw new BadRequestException("Transaction isn't initial");
         }
 
-        this.schedulerRegistry.deleteTimeout(transactionId);
+        const updatedTransaction = await this.prisma.transaction.update({
+            where: {
+                id: transactionId,
+            },
+            data: {
+                status: 'PENDING',
+            },
+            select: {
+                id: true,
+                amount: true,
+                description: true,
+                isRejectable: true,
+                client: {
+                    select: {
+                        id: true,
+                        name: true,
+                        bankAccount: true,
+                        address: true,
+                        webhookEndpoint: true,
+                    },
+                },
+                status: true,
+            },
+        });
+
+        if (!updatedTransaction.isRejectable) {
+            this.schedulerRegistry.deleteTimeout(transactionId);
+        }
 
         await axios
             .post(updatedTransaction.client.webhookEndpoint, {
@@ -110,13 +122,15 @@ export class QrPaymentsService {
             });
 
         return {
-            amount: updatedTransaction.amount,
-            description: updatedTransaction.description,
-            clientId: updatedTransaction.client.id,
-            clientName: updatedTransaction.client.name,
-            bankAccount: updatedTransaction.client.bankAccount,
-            address: updatedTransaction.client.address,
-            status: updatedTransaction.status,
+            transactionData: {
+                amount: updatedTransaction.amount,
+                description: updatedTransaction.description,
+                clientId: updatedTransaction.client.id,
+                clientName: updatedTransaction.client.name,
+                bankAccount: updatedTransaction.client.bankAccount,
+                address: updatedTransaction.client.address,
+                status: updatedTransaction.status,
+            },
         };
     }
 
@@ -126,8 +140,6 @@ export class QrPaymentsService {
     }) {
         const { transactionId, status } = transactionData;
 
-        console.log({ transactionId, status });
-
         const transaction = await this.prisma.transaction.findUnique({
             where: {
                 id: transactionId,
@@ -135,8 +147,13 @@ export class QrPaymentsService {
             select: {
                 id: true,
                 status: true,
+                isRejectable: true,
             },
         });
+
+        if (status !== 'ACCEPTED' && !transaction?.isRejectable) {
+            throw new BadRequestException('Transaction is not rejectable');
+        }
 
         if (transaction?.status !== 'PENDING') {
             throw new BadRequestException("Transaction isn't pending");
@@ -161,7 +178,10 @@ export class QrPaymentsService {
         });
 
         await axios
-            .post(updateTransaction.client.webhookEndpoint, updateTransaction)
+            .post(updateTransaction.client.webhookEndpoint, {
+                transactionId: updateTransaction.id,
+                status: updateTransaction.status,
+            })
             .catch(() => {
                 console.log('Error while sending webhook');
             });

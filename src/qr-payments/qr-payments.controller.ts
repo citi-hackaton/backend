@@ -54,7 +54,7 @@ export class QrPaymentsController {
         return this.qrPaymentsService.validateTransaction(transactionId);
     }
 
-    @Post('updateTransaction')
+    @Post('updateTransactionStatus')
     @UseGuards(BankApiKeyGuard)
     @HttpCode(200)
     updateTransaction(

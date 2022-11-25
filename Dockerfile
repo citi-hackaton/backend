@@ -1,8 +1,6 @@
 FROM node:16-alpine
 
-ARG NODE_ENV=production
-ENV DATABASE_URL="postgresql://postgres:hODAI7eqUakjfzDGGkEm@containers-us-west-118.railway.app:6485/railway"
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=production
 
 RUN npm i -g @nestjs/cli
 
@@ -13,10 +11,9 @@ COPY yarn.lock ./
 
 RUN yarn install --production
 
-COPY . .
+COPY ./ ./
 
-RUN npx prisma db push
-RUN yarn add source-map-support
+RUN npx prisma generate
 RUN yarn build
 
-CMD [ "yarn", "start" ]
+CMD ["node", "dist/src/main.js"]
